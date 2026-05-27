@@ -1,0 +1,654 @@
+<!DOCTYPE html>
+<html lang="es">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>{% block title %}Panel de Reportes{% endblock %}</title>
+    <link rel="icon" href="{{ url_for('static', filename='img/favicon.ico') }}" type="image/png">
+    <!-- Bootstrap CSS -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet" />
+    <!-- Bootstrap Icons -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.5/font/bootstrap-icons.css" rel="stylesheet" />
+
+    <!-- Flatpickr CSS -->
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/flatpickr/dist/flatpickr.min.css">
+
+    <!-- DataTables CSS -->
+    <link rel="stylesheet" href="https://cdn.datatables.net/1.13.6/css/dataTables.bootstrap5.min.css">
+
+
+    <style>
+        html,
+        body {
+            height: 100%;
+            margin: 0;
+            font-family: 'Segoe UI', sans-serif;
+            background-color: #f4f9f4;
+        }
+
+        .wrapper {
+            display: flex;
+            flex-direction: column;
+            min-height: 100vh;
+        }
+
+        .main-content {
+            flex: 1;
+            display: flex;
+            transition: all 0.3s ease;
+        }
+
+        .sidebar {
+            transition: none !important;
+            width: 240px;
+            background-color: #1e3932;
+            color: #fff;
+            padding: 20px;
+            flex-shrink: 0;
+            box-shadow: 2px 0 5px rgba(0, 0, 0, 0.1);
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            position: relative;
+            z-index: 1000;
+            will-change: transform;
+            display: flex;
+            flex-direction: column;
+            user-select: none;
+        }
+
+        /* Solo aplicar transición después de la carga */
+        .sidebar.initialized {
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1) !important;
+        }
+
+        .sidebar.collapsed {
+            width: 80px;
+            padding: 20px 10px;
+        }
+
+        .sidebar-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            color: #f1c40f;
+            font-weight: bold;
+            font-size: 1.2rem;
+            margin-bottom: 20px;
+            white-space: nowrap;
+            overflow: hidden;
+        }
+
+        .sidebar-title {
+            transition: opacity 0.2s ease;
+        }
+
+        .sidebar.collapsed .sidebar-title {
+            opacity: 0;
+            width: 0;
+            display: none;
+        }
+
+        .sidebar-user-info {
+            color: #dfe6e9;
+            text-align: center;
+            margin-bottom: 30px;
+            white-space: nowrap;
+            overflow: hidden;
+            transition: all 0.3s ease;
+            font-size: 0.895rem;
+        }
+
+        .sidebar.collapsed .sidebar-user-info {
+            opacity: 0;
+            height: 0;
+            margin-bottom: 0;
+            display: none;
+        }
+
+        .list-group-item {
+            display: flex;
+            align-items: center;
+            background-color: transparent;
+            color: #dfe6e9;
+            border: none;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            padding: 10px 15px;
+            font-size: 0.95rem;
+            white-space: nowrap;
+            border-radius: 5px;
+            margin-bottom: 5px;
+        }
+
+        .list-group-item:hover,
+        .list-group-item.active {
+            background-color: #2c4f45;
+            color: #fff;
+        }
+
+        .sidebar.collapsed .list-group-item {
+            justify-content: center;
+            padding: 10px;
+            position: relative;
+        }
+
+        .sidebar.collapsed .list-group-item.active {
+            background-color: transparent;
+            border-left: 3px solid #f1c40f;
+        }
+
+        .sidebar.collapsed .list-group-item .sidebar-text {
+            display: none;
+        }
+
+        .sidebar .btn-logout {
+            display: flex;
+            align-items: center;
+            color: #dfe6e9;
+            margin-top: auto;
+            width: 100%;
+            font-size: 0.95rem;
+            cursor: pointer;
+            padding: 10px 15px;
+            border-radius: 5px;
+            transition: all 0.2s ease;
+        }
+
+        .sidebar .btn-logout:hover {
+            background-color: #2c4f45;
+            color: #fff;
+        }
+
+        .sidebar.collapsed .btn-logout {
+            justify-content: center;
+            padding: 10px;
+        }
+
+        .sidebar.collapsed .btn-logout .sidebar-text {
+            display: none;
+        }
+
+        .content {
+            flex-grow: 1;
+            padding: 15px;
+            overflow-y: auto;
+            height: 85vh;
+            background-color: #fefefe;
+            box-sizing: border-box;
+            transition: margin-left 0.3s ease;
+            will-change: margin-left;
+        }
+
+
+        .sidebar.collapsed~.d-flex .content {
+            margin-left: 0;
+        }
+
+        footer {
+            position: fixed;
+            bottom: 0;
+            left: 12%;
+            width: 87%;
+            text-align: center;
+            padding: 10px;
+            font-size: 0.9rem;
+            background-color: #fefefe;
+            color: #6c757d;
+            z-index: 999;    
+        }
+
+        .sidebar .bi {
+            font-size: 1.2rem;
+            min-width: 24px;
+            text-align: center;
+            transition: transform 0.2s ease;
+        }
+
+        #toggleSidebar {
+            background: transparent;
+            border: none;
+            color: #f1c40f;
+            font-size: 1.5rem;
+            cursor: pointer;
+            padding: 5px;
+            z-index: 1100;
+            transition: all 0.2s ease;
+        }
+
+        #toggleSidebar:hover {
+            transform: scale(1.1);
+            color: #fff;
+        }
+
+        .sidebar.collapsed #toggleSidebar {
+            margin: 0 auto;
+        }
+
+        /* Efectos para cards */
+        .card {
+            cursor: pointer;
+            transition: all 0.2s ease;
+            border: 1px solid rgba(0, 0, 0, 0.1);
+        }
+
+        .card:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+        }
+
+        /* Responsive */
+        .mobile-menu-toggle {
+            display: none;
+            position: fixed;
+            left: 10px;
+            top: 10px;
+            z-index: 1100;
+            background: rgba(30, 57, 50, 0.8);
+            border: none;
+            color: #f1c40f;
+            font-size: 1.5rem;
+            border-radius: 5px;
+            padding: 5px 10px;
+        }
+
+        @media (max-width: 768px) {
+            .sidebar {
+                position: fixed;
+                height: 100%;
+                left: 0;
+                top: 0;
+                transform: translateX(-100%);
+                z-index: 1000;
+            }
+
+            .sidebar:not(.collapsed) {
+                transform: translateX(0);
+            }
+
+            .mobile-menu-toggle {
+                display: block;
+            }
+
+            .sidebar.collapsed {
+                width: 250px;
+            }
+        }
+
+        /* Mejoras para el estado activo */
+        .list-group-item.active .bi {
+            color: #f1c40f;
+        }
+
+        .sidebar.collapsed .list-group-item.active .bi {
+            color: #fff;
+        }
+
+        .header-banner {
+            background: linear-gradient(to right, #dfffe0, #b9e4c9);
+            /* Degradado suave */
+            padding: 15px 20px;
+            border-radius: 12px;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .header-banner::after {
+            content: '';
+            background: url('/static/img/logoPB.png') no-repeat right center;
+            background-size: contain;
+            position: absolute;
+            right: 15px;
+            top: 50%;
+            transform: translateY(-50%);
+            width: 100px;
+            height: 100%;
+            opacity: none;
+            pointer-events: none;
+        }
+
+        .hover-translate:hover {
+            transform: translateY(-3px);
+            transition: transform 0.2s ease;
+            display: inline-block;
+            /* necesario para que transform funcione */
+        }
+
+        .btn-icon {
+            background: none;
+            border: none;
+            padding: 0;
+            font-size: 1.5rem;
+            /* Tamaño ícono, ajusta si quieres */
+            color: inherit;
+            /* Hereda color del texto, ajusta si quieres */
+            cursor: pointer;
+            /* Que se vea clickable */
+        }
+
+        .btn-icon:focus {
+            outline: none;
+            /* Quita el contorno azul al hacer foco */
+            box-shadow: none;
+        }
+
+        .content {
+            padding-bottom: 60px; /* 🔹 deja espacio libre para que el footer no tape nada */
+        }
+        /* Contenedor del scrollbar */
+        ::-webkit-scrollbar {
+            width: 8px; /* Ancho para scroll vertical */
+            height: 8px; /* Alto para scroll horizontal */
+        }
+
+        /* Track (fondo/carril del scrollbar) */
+        ::-webkit-scrollbar-track {
+            background: #f1f1f1;
+            border-radius: 10px;
+        }
+
+        /* Handle (la barra que se mueve) */
+        ::-webkit-scrollbar-thumb {
+            background: #888;
+            border-radius: 10px;
+        }
+
+        /* Handle al hacer hover */
+        ::-webkit-scrollbar-thumb:hover {
+            background: #555;
+        }
+
+        /* Botones de flecha (opcional) */
+        ::-webkit-scrollbar-button {
+            display: none; /* O personalizar */
+        }
+
+        /* Esquinas donde se encuentran scrolls horizontal y vertical */
+        ::-webkit-scrollbar-corner {
+            background: transparent;
+        }
+
+    </style>
+
+    {% block head_extra %}{% endblock %}
+</head>
+
+<body>
+    <!-- Contenedor de Toasts -->
+    <div aria-live="polite" aria-atomic="true" class="position-fixed top-0 end-0 p-3"
+        style="z-index: 1080; min-width: 300px;">
+        <div id="toastContainer">
+            <!-- Aquí se inyectan los toasts desde JS -->
+        </div>
+    </div>
+
+    <div class="wrapper">
+        <div class="main-content">
+            <!-- Botón de toggle para móviles -->
+            <button class="btn btn-outline-dark mobile-menu-toggle" id="mobileToggle">
+                <i class="bi bi-list"></i>
+            </button>
+
+            <!-- Sidebar -->
+            <div class="sidebar d-flex flex-column sidebar-transition" id="sidebar">
+                <div class="sidebar-header">
+                    <div class="d-flex align-items-center">
+                        <i class="bi bi-graph-up text-warning fs-4 me-2"></i>
+                        <span class="fs-5 fw-bold text-warning sidebar-title">DataHub PB</span>
+                    </div>
+                    <button id="toggleSidebar">
+                        <i class="bi bi-list"></i>
+                    </button>
+                </div>
+
+                <div class="sidebar-user-info">
+                    <p class="text-white mb-0">Bienvenido(a), <strong>{{ nombre if nombre else "Usuario" }}</strong></p>
+                </div>
+
+                <ul class="list-group list-group-flush w-100">
+                    <li class="list-group-item {{ 'active' if request.path == '/dashboard' else '' }}"
+                        data-href="/dashboard" title="Dashboard">
+                        <i class="bi bi-house-door"></i><span class="sidebar-text ms-2">Dashboard</span>
+                    </li>
+                    <li class="list-group-item {{ 'active' if request.path == '/reportes' else '' }}"
+                        data-href="/reportes" title="Reportes">
+                        <i class="bi bi-journals"></i><span class="sidebar-text ms-2">Reportes</span>
+                    </li>
+                    {% if ver_solicitudes_reportes %}
+                    <li class="list-group-item {{ 'active' if request.path == '/solicitudes_reportes' else '' }}"
+                        data-href="/solicitudes_reportes" title="Ver Solicitudes">
+                        <i class="bi bi-card-checklist"></i><span class="sidebar-text ms-2">Solicitudes</span>
+                    </li>
+                    {% endif %}
+                    {% if es_admin %}
+                    <li class="list-group-item {{ 'active' if request.path == '/admin_solicitudes_reportes' else '' }}"
+                        data-href="/admin_solicitudes_reportes" title="Gestión de Solicitudes">
+                        <i class="bi bi-file-earmark-text"></i><span class="sidebar-text ms-2">Gestión de Solicitudes</span>
+                    </li>
+                    <li class="list-group-item {{ 'active' if request.path == '/admin_accesos' else '' }}"
+                        data-href="/admin_accesos" title="Accesos">
+                        <i class="bi bi-shield-lock"></i><span class="sidebar-text ms-2">Accesos</span>
+                    </li>
+                    <li class="list-group-item {{ 'active' if request.path == '/admin_areas' else '' }}"
+                        data-href="/admin_areas" title="Áreas">
+                        <i class="bi bi-collection"></i><span class="sidebar-text ms-2">Áreas</span>
+                    </li>
+                    <li class="list-group-item {{ 'active' if request.path == '/admin_usuarios' else '' }}"
+                        data-href="/admin_usuarios" title="Usuarios">
+                        <i class="bi bi-person-plus-fill"></i><span class="sidebar-text ms-2">Usuarios</span>
+                    </li>
+                    {% endif %}
+                    {% if ver_metricas %}
+                    <li class="list-group-item {{ 'active' if request.path == '/metricas' else '' }}"
+                        data-href="/metricas" title="Métricas">
+                        <i class="bi bi-bar-chart-line"></i><span class="sidebar-text ms-2">Métricas</span>
+                    </li>
+                    {% endif %}
+                </ul>
+                <hr class="text-white w-100"> <!-- mt-auto para colocar más por debajo la linea blanca -->
+
+                <div class="sidebar-version text-center">
+                    <small class="text-white-50" style="font-size: 0.75rem;">v{{ app_version }}</small>
+                </div>
+
+                <button onclick="window.location.href='/logout'" class="btn btn-outline-light btn-logout"
+                    title="Cerrar sesión">
+                    <i class="bi bi-box-arrow-right"></i><span class="sidebar-text ms-2">Cerrar sesión</span>
+                </button>
+            </div>
+
+            <div class="d-flex flex-column flex-grow-1">
+                <div class="content">
+                    {% block content %}{% endblock %}
+                </div>
+
+                <footer>
+                    Copyright © 2025-{{ current_year }} <strong>Palo Blanco</strong>.
+                </footer>
+            </div>
+        </div>
+    </div>
+
+    <!-- Bootstrap JS -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+    <!-- Flatpickr JS -->
+    <script src="https://cdn.jsdelivr.net/npm/flatpickr"></script>
+    <!-- Idioma español -->
+    <script src="https://cdn.jsdelivr.net/npm/flatpickr/dist/l10n/es.js"></script>
+
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+
+    <!-- DataTables JS -->
+    <script src="https://cdn.datatables.net/1.13.6/js/jquery.dataTables.min.js"></script>
+    <script src="https://cdn.datatables.net/1.13.6/js/dataTables.bootstrap5.min.js"></script>
+
+
+
+    {% block scripts %}{% endblock %}
+
+<script>
+document.addEventListener('DOMContentLoaded', function () {
+    
+    $(document).ready(function () {
+    $('table').DataTable({
+        language: {
+            url: '//cdn.datatables.net/plug-ins/1.13.6/i18n/es-ES.json'
+        },
+        pageLength: 15,
+        lengthMenu: [ [15, 30, 50, 100, -1], [15, 30, 50, 100, "Todos"] ],
+        ordering: true,
+        responsive: true
+    });
+});
+    const blocker = document.getElementById('click-blocker');
+
+    document.addEventListener('contextmenu', function(e) {
+        e.preventDefault();
+
+        // Posicionar el ícono donde ocurrió el clic
+        blocker.style.left = (e.pageX - 25) + 'px';
+        blocker.style.top = (e.pageY - 25) + 'px';
+        blocker.style.display = 'block';
+
+        // Ocultar el ícono después de 1 segundo
+        setTimeout(() => {
+            blocker.style.display = 'none';
+        }, 500);
+    });
+
+    const sidebar = document.getElementById('sidebar');
+    const toggleBtn = document.getElementById('toggleSidebar');
+    const mobileToggle = document.getElementById('mobileToggle');
+    const toastContainer = document.getElementById('toastContainer');
+
+    function saveSidebarState() {
+        localStorage.setItem('sidebarCollapsed', sidebar.classList.contains('collapsed'));
+    }
+
+    function loadSidebarState() {
+        const isCollapsed = localStorage.getItem('sidebarCollapsed') === 'true';
+        if (isCollapsed) sidebar.classList.add('collapsed');
+        else sidebar.classList.remove('collapsed');
+    }
+
+    function updateToggleIcon() {
+        const toggleIcons = document.querySelectorAll('#toggleSidebar i, #mobileToggle i');
+        toggleIcons.forEach(icon => {
+            icon.classList.toggle('bi-list', !sidebar.classList.contains('collapsed'));
+            icon.classList.toggle('bi-chevron-right', sidebar.classList.contains('collapsed'));
+        });
+    }
+
+    function setupToggleButton() {
+        if (toggleBtn) {
+            toggleBtn.addEventListener('click', function (e) {
+                e.preventDefault();
+                sidebar.classList.toggle('collapsed');
+                updateToggleIcon();
+                saveSidebarState();
+            });
+        }
+    }
+
+    function setupMenuItems() {
+        document.querySelectorAll('.list-group-item[data-href]').forEach(item => {
+            item.addEventListener('click', function (e) {
+                if (e.button !== 0 || e.ctrlKey || e.shiftKey || e.altKey || e.metaKey) return;
+                e.preventDefault();
+                saveSidebarState();
+                setTimeout(() => window.location.href = this.getAttribute('data-href'), 50);
+            });
+        });
+    }
+
+    function setupMobileToggle() {
+        if (mobileToggle) {
+            mobileToggle.addEventListener('click', function (e) {
+                e.preventDefault();
+                sidebar.classList.remove('collapsed');
+                updateToggleIcon();
+                saveSidebarState();
+            });
+
+            document.addEventListener('click', function (e) {
+                if (window.innerWidth <= 768 && !sidebar.contains(e.target) && e.target !== mobileToggle) {
+                    sidebar.classList.add('collapsed');
+                    updateToggleIcon();
+                    saveSidebarState();
+                }
+            });
+        }
+    }
+
+    function setupTooltips() {
+        const items = sidebar.querySelectorAll('.list-group-item, .btn-logout');
+        items.forEach(item => {
+            const tooltip = new bootstrap.Tooltip(item, {
+                placement: 'right',
+                trigger: 'hover',
+                delay: { show: 300, hide: 100 },
+                container: sidebar
+            });
+
+            item.addEventListener('mouseleave', () => tooltip.hide());
+            item.addEventListener('click', () => tooltip.hide());
+        });
+    }
+
+    function showFlashMessages() {
+        const messages = [
+            {% with messages = get_flashed_messages(with_categories = true) %}
+            {% for category, message in messages %}
+            { category: "{{ category }}", message: {{ message | tojson }} }{% if not loop.last %}, {% endif %}
+            {% endfor %}
+            {% endwith %}
+        ];
+
+        function mapCategoryToBootstrapClass(category) {
+            switch (category) {
+                case 'success': return 'success';
+                case 'danger': return 'danger';
+                case 'warning': return 'warning';
+                case 'info': return 'info';
+                default: return 'secondary';
+            }
+        }
+
+        messages.forEach(({ category, message }) => {
+            const toastEl = document.createElement('div');
+            toastEl.className = 'toast align-items-center text-bg-' + mapCategoryToBootstrapClass(category) + ' border-0';
+            toastEl.setAttribute('role', 'alert');
+            toastEl.setAttribute('aria-live', 'assertive');
+            toastEl.setAttribute('aria-atomic', 'true');
+
+            toastEl.innerHTML = `
+                <div class="d-flex">
+                    <div class="toast-body">${message}</div>
+                    <button type="button" class="btn-close btn-close-white me-2 m-auto" data-bs-dismiss="toast" aria-label="Cerrar"></button>
+                </div>
+            `;
+            toastContainer.appendChild(toastEl);
+            new bootstrap.Toast(toastEl, { delay: 5000 }).show();
+        });
+    }
+
+    // Inicialización completa
+    loadSidebarState();
+    updateToggleIcon();
+    sidebar.classList.add('initialized');
+
+    setupToggleButton();
+    setupMenuItems();
+    setupMobileToggle();
+    setupTooltips();
+    showFlashMessages();
+
+    // ✅ flatpickr dentro del DOMContentLoaded
+    
+});
+</script>
+
+
+
+</body>
+
+</html>

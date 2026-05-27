@@ -1,0 +1,231 @@
+{% extends "base.html" %}
+
+{% block title %}DataHub Palo Blanco - Administrar accesos{% endblock %}
+
+{% block head_extra %}
+<link href="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/css/select2.min.css" rel="stylesheet" />
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/select2-bootstrap-5-theme@1.3.0/dist/select2-bootstrap-5-theme.min.css" />
+<style>
+    /* Ajuste fino para que coincida con la altura de los inputs de Bootstrap */
+    .select2-container .select2-selection--single {
+        height: 38px !important; 
+    }
+    .select2-container--bootstrap-5 .select2-selection--single .select2-selection__rendered {
+        line-height: 36px !important;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    
+    <div class="header-banner d-flex flex-column flex-md-row justify-content-between align-items-start align-items-md-center mb-4 position-relative">
+        <h3 class="mb-3 mb-md-0 text-secondary">
+            <i class="bi bi-shield-lock text-dark"></i> / Administrar Accesos a Reportes
+        </h3>
+    </div>
+
+    <form method="GET" id="usuarioForm">
+        <div class="row mb-4">
+            <div class="col-md-6">
+                <label for="usuario" class="form-label fw-semibold text-dark">Selecciona Usuario:</label>
+                <select id="usuario" name="usuario" class="form-select">
+                    {% if not usuarios %}
+                    <option value="" disabled selected>No hay usuarios disponibles</option>
+                    {% else %}
+                        <option value=""></option>
+                        {% for u in usuarios %}
+                        <option value="{{ u.user }}" {% if u.user==usuario_sel %}selected{% endif %}>
+                            {{ u.nombre }} {{ u.apellido }} | {{ u.user }}
+                        </option>
+                        {% endfor %}
+                    {% endif %}
+                </select>
+            </div>
+            <div class="col-md-6 d-flex align-items-end">
+                {% if usuario_sel %}
+                {% set usuario_actual = (usuarios | selectattr('user', 'equalto', usuario_sel) | list | first) %}
+                <div class="alert alert-success mb-0 w-100 shadow-sm">
+                    <i class="bi bi-person-fill"></i> Editando accesos para:
+                    <strong>{{ usuario_actual.nombre }} {{ usuario_actual.apellido }} | {{ usuario_actual.user }}</strong>
+                </div>
+                {% endif %}
+            </div>
+        </div>
+    </form>
+
+    {% if usuario_sel %}
+    <form method="POST" id="accesosForm">
+        <input type="hidden" name="usuario" value="{{ usuario_sel }}">
+
+        <div class="card bg-light mb-4 border-0 shadow-sm">
+            <div class="card-body">
+                <div class="row g-3 align-items-center">
+                    <div class="col-md-6">
+                        <div class="input-group">
+                            <span class="input-group-text bg-white border-end-0"><i class="bi bi-search"></i></span>
+                            <input type="text" id="buscadorReportes" class="form-control border-start-0" placeholder="Filtrar área o reportes..." onkeyup="filtrarReportes()">
+                        </div>
+                    </div>
+                    <div class="col-md-6 text-md-end">
+                        <div class="btn-group" role="group">
+                            <button type="button" class="btn btn-sm btn-outline-dark" onclick="expandirTodo(true)">
+                                <i class="bi bi-arrows-expand"></i> Expandir
+                            </button>
+                            <button type="button" class="btn btn-sm btn-outline-dark" onclick="expandirTodo(false)">
+                                <i class="bi bi-arrows-collapse"></i> Contraer
+                            </button>
+                        </div>
+                        <div class="vr mx-2"></div>
+                        <div class="btn-group" role="group">
+                            <button type="button" class="btn btn-sm btn-outline-secondary" onclick="seleccionarTodos(true)">
+                                <i class="bi bi-check-all"></i> Todo
+                            </button>
+                            <button type="button" class="btn btn-sm btn-outline-secondary" onclick="seleccionarTodos(false)">
+                                <i class="bi bi-x-circle"></i> Nada
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="accordion" id="accordionAreas">
+            {% for area, reportes in reportes_por_area.items() %}
+            <div class="accordion-item border-0 mb-3 shadow-sm rounded area-item">
+                <h2 class="accordion-header" id="heading{{ loop.index }}">
+                    <button class="accordion-button collapsed fw-semibold text-white" type="button"
+                        data-bs-toggle="collapse" data-bs-target="#collapse{{ loop.index }}" aria-expanded="false"
+                        aria-controls="collapse{{ loop.index }}"
+                        style="background: linear-gradient(135deg, #195c4c, #3d5c32); border-radius: 6px;">
+                        {{ area }}
+                        <span class="badge bg-white text-success ms-2">{{ reportes|length }}</span>
+                    </button>
+                </h2>
+                <div id="collapse{{ loop.index }}" class="accordion-collapse collapse"
+                    aria-labelledby="heading{{ loop.index }}">
+                    <div class="accordion-body bg-light rounded-bottom">
+                        
+                        <div class="d-flex justify-content-end mb-2 border-bottom pb-2">
+                            <a href="#" onclick="toggleArea('collapse{{ loop.index }}', true); return false;" class="text-success text-decoration-none me-2"><small>Marcar Área</small></a>
+                            <a href="#" onclick="toggleArea('collapse{{ loop.index }}', false); return false;" class="text-danger text-decoration-none"><small>Desmarcar Área</small></a>
+                        </div>
+
+                        {% for reporte in reportes %}
+                        <div class="form-check mb-2 reporte-item">
+                            <input class="form-check-input" type="checkbox" name="accesos" value="{{ reporte.id }}"
+                                id="reporte_{{ reporte.id }}" {% if reporte.id in accesos_usuario %}checked{% endif %}>
+                            <label class="form-check-label" for="reporte_{{ reporte.id }}">
+                                <span class="reporte-nombre">{{ reporte.nombre }}</span>
+                                <small class="text-muted ms-2">(ID: {{ reporte.id }})</small>
+                            </label>
+                        </div>
+                        {% endfor %}
+                    </div>
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+
+        <div class="d-grid gap-2 d-md-flex justify-content-md-end mt-4 pb-5">
+            <button type="submit" class="btn btn-success shadow-sm btn-md">
+                <i class="bi bi-save"></i> Guardar Cambios
+            </button>
+            <a href="{{ url_for('admin_accesos') }}" class="btn btn-outline-secondary btn-md">
+                <i class="bi bi-arrow-counterclockwise"></i> Cancelar
+            </a>
+        </div>
+    </form>
+    {% else %}
+    <div class="alert alert-warning">
+        <i class="bi bi-exclamation-triangle"></i> No hay usuarios disponibles.
+    </div>
+    {% endif %}
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script src="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/js/select2.min.js"></script>
+
+<script>
+    $(document).ready(function() {
+        // 1. Inicializar Select2
+        $('#usuario').select2({
+            theme: 'bootstrap-5',
+            placeholder: "Buscar por nombre o usuario...",
+            allowClear: false,
+            width: '100%'
+        });
+
+        // 2. Enviar formulario al seleccionar
+        $('#usuario').on('select2:select', function (e) {
+            $('#usuarioForm').submit();
+        });
+
+        // 3. NUEVO: Forzar el foco en el input de búsqueda al abrir
+        $('#usuario').on('select2:open', function (e) {
+            // Usamos un pequeño timeout para asegurar que la animación de apertura terminó
+            setTimeout(function() {
+                document.querySelector('.select2-search__field').focus();
+            }, 50);
+        });
+    });
+
+    // --- Lógica del Buscador de Reportes (Checkboxes) ---
+    function filtrarReportes() {
+        const input = document.getElementById('buscadorReportes');
+        const filter = input.value.toLowerCase();
+        const areas = document.getElementsByClassName('area-item');
+
+        Array.from(areas).forEach(area => {
+            const reportes = area.getElementsByClassName('reporte-item');
+            let hayCoincidencias = false;
+            let areaTexto = area.querySelector('.accordion-button').innerText.toLowerCase();
+            const coincidenciaEnTitulo = areaTexto.includes(filter);
+
+            Array.from(reportes).forEach(reporteDiv => {
+                const label = reporteDiv.querySelector('.reporte-nombre').innerText.toLowerCase();
+                if (label.includes(filter) || coincidenciaEnTitulo) {
+                    reporteDiv.style.display = "";
+                    hayCoincidencias = true;
+                    if(filter.length > 0 && !coincidenciaEnTitulo) reporteDiv.classList.add('bg-warning', 'bg-opacity-10');
+                    else reporteDiv.classList.remove('bg-warning', 'bg-opacity-10');
+                } else {
+                    reporteDiv.style.display = "none";
+                }
+            });
+
+            const collapseElement = area.querySelector('.accordion-collapse');
+            const bsCollapse = bootstrap.Collapse.getOrCreateInstance(collapseElement, { toggle: false });
+
+            if (hayCoincidencias) {
+                area.style.display = "";
+                if (filter.length > 0) bsCollapse.show();
+            } else {
+                area.style.display = "none";
+            }
+        });
+    }
+
+    function seleccionarTodos(estado) {
+        const visibles = document.querySelectorAll('.reporte-item:not([style*="display: none"]) input[name="accesos"]');
+        visibles.forEach(checkbox => checkbox.checked = estado);
+    }
+
+    function expandirTodo(abrir) {
+        document.querySelectorAll('.accordion-collapse').forEach(el => {
+            const bsCollapse = bootstrap.Collapse.getOrCreateInstance(el, { toggle: false });
+            abrir ? bsCollapse.show() : bsCollapse.hide();
+        });
+    }
+
+    function toggleArea(collapseId, estado) {
+        const container = document.getElementById(collapseId);
+        container.querySelectorAll('input[name="accesos"]').forEach(cb => cb.checked = estado);
+    }
+
+    document.getElementById('buscadorReportes')?.addEventListener('keypress', function(e) {
+        if (e.key === 'Enter') e.preventDefault();
+    });
+</script>
+{% endblock %}

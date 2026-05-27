@@ -1,0 +1,62 @@
+{% set id_prefijo = 'edit_' %}
+<div class="container-fluid">
+    <div class="row g-3">
+        <div class="col-md-6">
+            <label class="form-label" for="{{ id_prefijo }}reporte">Nombre del Reporte</label>
+            <input type="text" class="form-control" id="{{ id_prefijo }}reporte" name="reporte" required>
+        </div>
+        <div class="col-md-6">
+            <label class="form-label" for="{{ id_prefijo }}area">Área</label>
+            <input type="text" class="form-control" id="{{ id_prefijo }}area" name="area" required>
+        </div>
+
+        <div class="col-md-6">
+            <label class="form-label" for="{{ id_prefijo }}fecha_solicitud">Fecha de Solicitud</label>
+            <input type="text" class="form-control flatpickr-fecha" id="{{ id_prefijo }}fecha_solicitud"
+                name="fecha_solicitud" required>
+        </div>
+        <div class="col-md-6">
+            <label class="form-label" for="{{ id_prefijo }}solicitado_por">Solicitado por</label>
+            <input type="text" class="form-control" id="{{ id_prefijo }}solicitado_por" name="solicitado_por" required>
+        </div>
+
+        <div class="col-md-6">
+            <label class="form-label" for="{{ id_prefijo }}prioridad">Prioridad</label>
+            <select class="form-select" id="{{ id_prefijo }}prioridad" name="prioridad" required>
+                <option value="Alta">Alta</option>
+                <option value="Media" selected>Media</option>
+                <option value="Baja">Baja</option>
+            </select>
+        </div>
+        <div class="col-md-6">
+            <label class="form-label" for="{{ id_prefijo }}complejidad">Complejidad</label>
+            <select class="form-select" id="{{ id_prefijo }}complejidad" name="complejidad" required>
+                <option value="Alta">Alta</option>
+                <option value="Media" selected>Media</option>
+                <option value="Baja">Baja</option>
+            </select>
+        </div>
+
+        <div class="col-md-6">
+            <label class="form-label" for="{{ id_prefijo }}fecha_entregado">Fecha Entregado</label>
+            <input type="text" class="form-control flatpickr-fecha" id="{{ id_prefijo }}fecha_entregado"
+                name="fecha_entregado">
+        </div>
+        <div class="col-md-6">
+            <label class="form-label" for="{{ id_prefijo }}progreso">Progreso (%)</label>
+            <input type="number" min="0" max="100" class="form-control" id="{{ id_prefijo }}progreso" name="progreso"
+                value="0" required>
+        </div>
+
+        <div class="col-12">
+            <label class="form-label" for="{{ id_prefijo }}encargado">Encargado</label>
+            <input type="text" class="form-control" id="{{ id_prefijo }}encargado" name="encargado">
+        </div>
+
+        <div class="col-12">
+            <label class="form-label" for="{{ id_prefijo }}observaciones">Observaciones</label>
+            <textarea class="form-control" id="{{ id_prefijo }}observaciones" name="observaciones" rows="3"
+                placeholder="Agregar comentarios u observaciones..."></textarea>
+        </div>
+    </div>
+</div>

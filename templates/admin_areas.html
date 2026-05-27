@@ -1,0 +1,171 @@
+{% extends "base.html" %}
+
+{% block title %}DataHub Palo Blanco - Administrar áreas{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <div
+        class="header-banner d-flex flex-column flex-md-row justify-content-between align-items-start align-items-md-center mb-4 position-relative">
+        <h3 class="mb-3 mb-md-0 text-secondary">
+            <i class="bi bi-collection me-2 text-dark"></i>/ Administrar Áreas
+        </h3>
+    </div>
+
+
+    <!-- Botón fuera del header pero dentro del mismo contenedor general -->
+    <div class="d-flex justify-content-end mb-3">
+        <button class="btn btn-success" data-bs-toggle="modal" data-bs-target="#nuevaAreaModal">
+            <i class="bi bi-plus-circle me-1"></i> Nueva Área
+        </button>
+    </div>
+
+        <div class="card-body">
+            <div class="table-responsive">
+                <table class="table table-hover">
+                    <thead class="table-light">
+                        <tr>
+                            <th>ID</th>
+                            <th>Nombre</th>
+                            <th>Cantidad de Reportes</th>
+                            <th>Acciones</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for area in areas %}
+                        <tr>
+                            <td>{{ area.id }}</td>
+                            <td>{{ area.nombre }}</td>
+                            <td>{{ area.reportes|length }}</td>
+                            <td>
+                                <div class="btn-group" role="group">
+                                    <a href="{{ url_for('admin_reportes', area_id=area.id) }}"
+                                        class="btn btn-sm btn-primary" title="Ver reportes">
+                                        <i class="bi bi-list-ul"></i>
+                                    </a>
+                                    <button class="btn btn-sm btn-warning" data-bs-toggle="modal"
+                                        data-bs-target="#editarAreaModal" data-id="{{ area.id }}"
+                                        data-nombre="{{ area.nombre }}" title="Editar">
+                                        <i class="bi bi-pencil-square"></i>
+                                    </button>
+                                    <button class="btn btn-sm btn-danger" data-bs-toggle="modal"
+                                        data-bs-target="#eliminarAreaModal" data-id="{{ area.id }}"
+                                        data-nombre="{{ area.nombre }}" title="Eliminar">
+                                        <i class="bi bi-trash"></i>
+                                    </button>
+                                </div>
+                            </td>
+                        </tr>
+                        {% else %}
+                        <tr>
+                            <td colspan="4" class="text-center">No hay áreas registradas</td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
+
+<!-- Modal Nueva Área -->
+<div class="modal fade" id="nuevaAreaModal" tabindex="-1" aria-labelledby="nuevaAreaModalLabel" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <form method="POST" action="{{ url_for('crear_area') }}">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="nuevaAreaModalLabel">Nueva Área</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                    <div class="mb-3">
+                        <label for="nombre" class="form-label">Nombre del Área</label>
+                        <input type="text" class="form-control" id="nombre" name="nombre" required>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+                    <button type="submit" class="btn btn-success">Guardar</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<!-- Modal Editar Área -->
+<div class="modal fade" id="editarAreaModal" tabindex="-1" aria-labelledby="editarAreaModalLabel" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <form method="POST" action="{{ url_for('editar_area') }}">
+                <input type="hidden" id="edit_id" name="id">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="editarAreaModalLabel">Editar Área</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                    <div class="mb-3">
+                        <label for="edit_nombre" class="form-label">Nombre del Área</label>
+                        <input type="text" class="form-control" id="edit_nombre" name="nombre" required>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+                    <button type="submit" class="btn btn-primary">Guardar Cambios</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<!-- Modal Eliminar Área -->
+<div class="modal fade" id="eliminarAreaModal" tabindex="-1" aria-labelledby="eliminarAreaModalLabel"
+    aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <form method="POST" action="{{ url_for('eliminar_area') }}">
+                <input type="hidden" id="delete_id" name="id">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="eliminarAreaModalLabel">Eliminar Área</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                    <p>¿Estás seguro que deseas eliminar el área <strong id="delete_nombre"></strong>?</p>
+                    <p class="text-danger">Esta acción eliminará todos los reportes asociados y no se puede deshacer.
+                    </p>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+                    <button type="submit" class="btn btn-danger">Eliminar</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+{% block scripts %}
+<script>
+    // Configurar modales de edición y eliminación
+    document.addEventListener('DOMContentLoaded', function () {
+        const editarModal = document.getElementById('editarAreaModal');
+        const eliminarModal = document.getElementById('eliminarAreaModal');
+
+        editarModal.addEventListener('show.bs.modal', function (event) {
+            const button = event.relatedTarget;
+            const id = button.getAttribute('data-id');
+            const nombre = button.getAttribute('data-nombre');
+
+            document.getElementById('edit_id').value = id;
+            document.getElementById('edit_nombre').value = nombre;
+        });
+
+        eliminarModal.addEventListener('show.bs.modal', function (event) {
+            const button = event.relatedTarget;
+            const id = button.getAttribute('data-id');
+            const nombre = button.getAttribute('data-nombre');
+
+            document.getElementById('delete_id').value = id;
+            document.getElementById('delete_nombre').textContent = nombre;
+        });
+    });
+</script>
+{% endblock %}
+{% endblock %}

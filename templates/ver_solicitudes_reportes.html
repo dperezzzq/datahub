@@ -1,0 +1,227 @@
+{% extends "base.html" %}
+{% block title %}DataHub Palo Blanco - Solicitudes de Reportes{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <div class="header-banner d-flex justify-content-between align-items-center mb-4">
+        <h3 class="text-secondary">
+            <i class="bi bi-card-checklist me-2 text-dark"></i><span>/ Solicitudes de Reportes</span>
+        </h3>
+    </div>
+
+    <div class="table-responsive">
+        <table class="table table-hover align-middle">
+            <thead class="table-light">
+                <tr>
+                    <th>#</th>
+                    <th>Reporte</th>
+                    <th>Área</th>
+                    <th>Prioridad</th>
+                    <th>Fecha Solicitud</th>
+                    <th>Progreso</th>
+                    <th>Acciones</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for s in solicitudes %}
+                <tr>
+                    <td>{{ loop.index }}</td>
+                    <td>{{ s.reporte }}</td>
+                    <td>{{ s.area }}</td>
+                    <td>
+                        {% if s.prioridad == 'Alta' %}
+                        <span class="badge bg-danger">Alta</span>
+                        {% elif s.prioridad == 'Media' %}
+                        <span class="badge bg-warning text-dark">Media</span>
+                        {% else %}
+                        <span class="badge bg-success">Baja</span>
+                        {% endif %}
+                    </td>
+                    <td>{{ s.fecha_solicitud.strftime('%Y-%m-%d') }}</td>
+                    <td>
+                        <div class="progress" style="height: 15px;">
+                            <div class="progress-bar 
+                                {% if s.progreso < 40 %} bg-danger 
+                                {% elif s.progreso < 70 %} bg-warning text-dark 
+                                {% else %} bg-success 
+                                {% endif %}" style="width: {{ s.progreso }}%;">
+                                {{ s.progreso }}%
+                            </div>
+                        </div>
+                    </td>
+                    <td>
+                        <button class="btn btn-sm btn-warning" data-bs-toggle="offcanvas" data-bs-target="#detalleCanvas"
+                            data-id="{{ s.id }}"
+                            data-reporte="{{ s.reporte }}"
+                            data-area="{{ s.area }}"
+                            data-fecha_solicitud="{{ s.fecha_solicitud.strftime('%Y-%m-%d') }}"
+                            data-solicitado_por="{{ s.solicitado_por }}"
+                            data-prioridad="{{ s.prioridad }}"
+                            data-fecha_entregado="{{ s.fecha_entregado.strftime('%Y-%m-%d') if s.fecha_entregado else 'Pendiente' }}"
+                            data-encargado="{{ s.encargado or 'No asignado' }}"
+                            data-complejidad="{{ s.complejidad }}"
+                            data-progreso="{{ s.progreso }}"
+                            data-observaciones="{{ s.observaciones or '' }}">
+                            <i class="bi bi-eye "></i>
+                        </button>
+                    </td>
+                </tr>
+                {% else %}
+                <tr>
+                    <td colspan="7" class="text-muted">No hay solicitudes registradas.</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+
+<!-- PANEL LATERAL DETALLES -->
+<!-- PANEL LATERAL DETALLES (REDISEÑADO) -->
+<div class="offcanvas offcanvas-end shadow-lg" tabindex="-1" id="detalleCanvas" aria-labelledby="detalleCanvasLabel">
+    <div class="offcanvas-header border-bottom">
+        <h5 class="offcanvas-title fw-bold text-success" id="detalleCanvasLabel">
+            <i class="bi bi-info-circle me-2"></i>Detalles de la Solicitud
+        </h5>
+        <button type="button" class="btn-close" data-bs-dismiss="offcanvas"></button>
+    </div>
+    <div class="offcanvas-body">
+        <div class="mb-4">
+            <h6 class="text-muted mb-2">Nombre del Reporte</h6>
+            <p class="fs-5 fw-semibold text-dark" id="detalle_reporte">-</p>
+        </div>
+
+        <div class="mb-4">
+            <h6 class="text-muted mb-2">Área</h6>
+            <p class="fs-6 text-dark" id="detalle_area">-</p>
+        </div>
+
+        <div class="mb-4">
+            <h6 class="text-muted mb-2">Solicitado por</h6>
+            <p class="text-dark" id="detalle_solicitado_por">-</p>
+        </div>
+
+        <div class="row mb-4">
+            <div class="col-md-6">
+                <h6 class="text-muted mb-2">Fecha de Solicitud</h6>
+                <p class="text-dark" id="detalle_fecha_solicitud">-</p>
+            </div>
+            <div class="col-md-6">
+                <h6 class="text-muted mb-2">Fecha de Entrega</h6>
+                <p class="text-dark" id="detalle_fecha_entregado">-</p>
+            </div>
+        </div>
+
+        <div class="row mb-4">
+            <div class="col-md-6">
+                <h6 class="text-muted mb-2">Prioridad</h6>
+                <span class="badge fs-6" id="detalle_prioridad_badge">-</span>
+            </div>
+            <div class="col-md-6">
+                <h6 class="text-muted mb-2">Complejidad</h6>
+                <span class="badge fs-6" id="detalle_complejidad_badge">-</span>
+            </div>
+        </div>
+
+        <div class="row mb-4">
+            <div class="col-md-6">
+            <h6 class="text-muted mb-2">Encargado</h6>
+            <p class="text-dark" id="detalle_encargado">-</p>
+        </div>
+
+        
+            <div class="col-md-6">
+            <h6 class="text-muted mb-2">Estado</h6>
+            <span class="badge fs-6" id="detalle_estado_badge">-</span>
+            </div>
+        
+        </div>
+
+        <div class="mb-3">
+            <h6 class="text-muted mb-2">Progreso</h6>
+            <div class="progress" style="height: 25px;">
+                <div class="progress-bar" id="detalle_barra_progreso" role="progressbar"
+                    style="width: 0%;" aria-valuemin="0" aria-valuemax="100">
+                    <span id="detalle_progreso" class="fw-bold">0%</span>
+                </div>
+            </div>
+        </div>
+
+        <div class="mb-3">
+            <h6 class="text-muted mb-2">Observaciones:</h6>
+            <p id="detalle_observaciones" class="mb-0" style="white-space: pre-wrap; word-wrap: break-word;">-</p>
+        </div>
+    </div>
+</div>
+
+{% endblock %}
+
+{% block scripts %}
+<script>
+document.addEventListener('DOMContentLoaded', function () {
+    const offcanvas = document.getElementById('detalleCanvas');
+    offcanvas.addEventListener('show.bs.offcanvas', function (event) {
+        const button = event.relatedTarget;
+        const get = attr => button.getAttribute('data-' + attr) || '-';
+
+        // Poblar los campos
+        document.getElementById('detalle_reporte').textContent = get('reporte');
+        document.getElementById('detalle_area').textContent = get('area');
+        document.getElementById('detalle_solicitado_por').textContent = get('solicitado_por');
+        document.getElementById('detalle_fecha_solicitud').textContent = get('fecha_solicitud');
+        document.getElementById('detalle_fecha_entregado').textContent = get('fecha_entregado');
+        document.getElementById('detalle_encargado').textContent = get('encargado');
+        const observaciones = button.getAttribute('data-observaciones') || '';
+        document.getElementById('detalle_observaciones').textContent = observaciones;
+        document.getElementById('detalle_encargado').textContent = get('encargado');
+
+        
+
+        const prioridad = get('prioridad');
+        const badge = document.getElementById('detalle_prioridad_badge');
+        badge.textContent = prioridad;
+        badge.className = 'badge fs-6';
+        if (prioridad === 'Alta') badge.classList.add('bg-danger');
+        else if (prioridad === 'Media') badge.classList.add('bg-warning', 'text-dark');
+        else badge.classList.add('bg-success');
+
+        const complejidad = get('complejidad');
+        const compBadge = document.getElementById('detalle_complejidad_badge');
+        compBadge.textContent = complejidad;
+        compBadge.className = 'badge fs-6';
+        if (complejidad === 'Alta') compBadge.classList.add('bg-danger');
+        else if (complejidad === 'Media') compBadge.classList.add('bg-warning', 'text-dark');
+        else compBadge.classList.add('bg-success');
+
+        const progreso = parseInt(get('progreso')) || 0;
+        const barra = document.getElementById('detalle_barra_progreso');
+        barra.style.width = progreso + '%';
+        barra.setAttribute('aria-valuenow', progreso);
+        document.getElementById('detalle_progreso').textContent = progreso + '%';
+
+        const estadoBadge = document.getElementById('detalle_estado_badge');
+        estadoBadge.className = 'badge fs-6'; // Reset
+
+        if (progreso === 0) {
+            estadoBadge.textContent = 'No iniciado';
+            estadoBadge.classList.add('bg-danger');
+        } else if (progreso < 100) {
+            estadoBadge.textContent = 'En desarrollo';
+            estadoBadge.classList.add('bg-warning', 'text-dark');
+        } else {
+            estadoBadge.textContent = 'Completado';
+            estadoBadge.classList.add('bg-success');
+        }
+
+        // Colores de progreso
+        barra.classList.remove('bg-danger', 'bg-warning', 'bg-success', 'text-dark');
+        if (progreso < 40) barra.classList.add('bg-danger');
+        else if (progreso < 70) barra.classList.add('bg-warning', 'text-dark');
+        else barra.classList.add('bg-success');
+    });
+
+});
+
+</script>
+
+{% endblock %}

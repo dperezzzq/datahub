@@ -1,0 +1,192 @@
+{% extends "base.html" %}
+
+{% block title %}DataHub Palo Blanco - Administrar reportes{% endblock %}
+
+{% block sidebar_extra %}
+<ul class="list-group list-group-flush mb-4">
+    <li class="list-group-item" onclick="window.location.href='/admin_areas'">
+        <i class="bi bi-arrow-left-circle me-2"></i> Volver a Áreas
+    </li>
+</ul>
+{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <div
+        class="header-banner d-flex flex-column flex-md-row justify-content-between align-items-start align-items-md-center mb-4 position-relative">
+        <h3 class="mb-3 mb-md-0">
+            <a href="{{ url_for('admin_areas') }}" class="text-decoration-none">
+                <i class="bi bi-collection me-2 text-dark"></i><span class="text-secondary hover-translate">/ Administrar Áreas /
+                </span>
+            </a>
+            <i class="bi bi-file-earmark-bar-graph me-2 text-dark"></i>
+            Reportes de <span class="text-dark">{{ area.nombre }}</span>
+        </h3>
+    </div>
+
+    <!-- Botón fuera del header pero dentro del mismo contenedor general -->
+    <div class="d-flex justify-content-end mb-3">
+        <button class="btn btn-success" data-bs-toggle="modal" data-bs-target="#nuevoReporteModal">
+            <i class="bi bi-plus-circle me-1"></i> Nuevo Reporte
+        </button>
+    </div>
+
+
+    <div class="card shadow">
+        <div class="card-body">
+            <div class="table-responsive">
+                <table class="table table-hover">
+                    <thead class="table-light">
+                        <tr>
+                            <th>ID</th>
+                            <th>Nombre</th>
+                            <th>URL</th>
+                            <th>Acciones</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for reporte in reportes %}
+                        <tr>
+                            <td>{{ reporte.id }}</td>
+                            <td>{{ reporte.nombre }}</td>
+                            <td class="text-truncate" style="max-width: 200px;">{{ reporte.url }}</td>
+                            <td>
+                                <div class="btn-group" role="group">
+                                    <button class="btn btn-sm btn-warning" data-bs-toggle="modal"
+                                        data-bs-target="#editarReporteModal" data-id="{{ reporte.id }}"
+                                        data-nombre="{{ reporte.nombre }}" data-url="{{ reporte.url }}" title="Editar">
+                                        <i class="bi bi-pencil-square"></i>
+                                    </button>
+                                    <button class="btn btn-sm btn-danger" data-bs-toggle="modal"
+                                        data-bs-target="#eliminarReporteModal" data-id="{{ reporte.id }}"
+                                        data-nombre="{{ reporte.nombre }}" title="Eliminar">
+                                        <i class="bi bi-trash"></i>
+                                    </button>
+                                </div>
+                            </td>
+                        </tr>
+                        {% else %}
+                        <tr>
+                            <td colspan="4" class="text-center">No hay reportes registrados en esta área</td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Modal Nuevo Reporte -->
+<div class="modal fade" id="nuevoReporteModal" tabindex="-1" aria-labelledby="nuevoReporteModalLabel"
+    aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <form method="POST" action="{{ url_for('crear_reporte', area_id=area.id) }}">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="nuevoReporteModalLabel">Nuevo Reporte</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                    <div class="mb-3">
+                        <label for="nombre" class="form-label">Nombre del Reporte</label>
+                        <input type="text" class="form-control" id="nombre" name="nombre" required>
+                    </div>
+                    <div class="mb-3">
+                        <label for="url" class="form-label">URL del Reporte</label>
+                        <input type="url" class="form-control" id="url" name="url" required>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+                    <button type="submit" class="btn btn-success">Guardar</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<!-- Modal Editar Reporte -->
+<div class="modal fade" id="editarReporteModal" tabindex="-1" aria-labelledby="editarReporteModalLabel"
+    aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <form method="POST" action="{{ url_for('editar_reporte') }}">
+                <input type="hidden" id="edit_id" name="id">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="editarReporteModalLabel">Editar Reporte</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                    <div class="mb-3">
+                        <label for="edit_nombre" class="form-label">Nombre del Reporte</label>
+                        <input type="text" class="form-control" id="edit_nombre" name="nombre" required>
+                    </div>
+                    <div class="mb-3">
+                        <label for="edit_url" class="form-label">URL del Reporte</label>
+                        <input type="url" class="form-control" id="edit_url" name="url" required>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+                    <button type="submit" class="btn btn-primary">Guardar Cambios</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<!-- Modal Eliminar Reporte -->
+<div class="modal fade" id="eliminarReporteModal" tabindex="-1" aria-labelledby="eliminarReporteModalLabel"
+    aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <form method="POST" action="{{ url_for('eliminar_reporte') }}">
+                <input type="hidden" id="delete_id" name="id">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="eliminarReporteModalLabel">Eliminar Reporte</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                    <p>¿Estás seguro que deseas eliminar el reporte <strong id="delete_nombre"></strong>?</p>
+                    <p class="text-danger">Esta acción eliminará todos los accesos asociados y no se puede deshacer.</p>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+                    <button type="submit" class="btn btn-danger">Eliminar</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+{% block scripts %}
+<script>
+    // Configurar modales de edición y eliminación
+    document.addEventListener('DOMContentLoaded', function () {
+        const editarModal = document.getElementById('editarReporteModal');
+        const eliminarModal = document.getElementById('eliminarReporteModal');
+
+        editarModal.addEventListener('show.bs.modal', function (event) {
+            const button = event.relatedTarget;
+            const id = button.getAttribute('data-id');
+            const nombre = button.getAttribute('data-nombre');
+            const url = button.getAttribute('data-url');
+
+            document.getElementById('edit_id').value = id;
+            document.getElementById('edit_nombre').value = nombre;
+            document.getElementById('edit_url').value = url;
+        });
+
+        eliminarModal.addEventListener('show.bs.modal', function (event) {
+            const button = event.relatedTarget;
+            const id = button.getAttribute('data-id');
+            const nombre = button.getAttribute('data-nombre');
+
+            document.getElementById('delete_id').value = id;
+            document.getElementById('delete_nombre').textContent = nombre;
+        });
+    });
+</script>
+{% endblock %}
+{% endblock %}

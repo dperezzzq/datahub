@@ -1,0 +1,164 @@
+{% extends "base.html" %}
+{% block title %}DataHub Palo Blanco - Gestión de Solicitudes{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <div class="header-banner d-flex justify-content-between align-items-center mb-4">
+        <h3 class="text-secondary">
+            <i class="bi bi-file-earmark-text me-2 text-dark"></i><span>/ Gestión de Solicitudes de Reportes</span>
+        </h3>
+    </div>
+
+    <!-- Botón fuera del header pero dentro del mismo contenedor general -->
+    <div class="d-flex justify-content-end mb-3">
+        <button class="btn btn-success" data-bs-toggle="modal" data-bs-target="#nuevaSolicitudModal">
+            <i class="bi bi-plus-circle me-1"></i> Nueva Solicitud
+        </button>
+    </div>
+
+        <div class="card-body table-responsive">
+            <table class="table table-hover align-middle">
+                <thead class="table-light">
+                    <tr>
+                        <th>#</th>
+                        <th>Reporte</th>
+                        <th>Área</th>
+                        <th>Solicitado por</th>
+                        <th>Prioridad</th>
+                        <th>Fecha Solicitud</th>
+                        <th>Fecha Entregado</th>
+                        <th>Encargado</th>
+                        <th>Acciones</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for s in solicitudes %}
+                    <tr>
+                        <td>{{ loop.index }}</td>
+                        <td>{{ s.reporte }}</td>
+                        <td>{{ s.area }}</td>
+                        <td>{{ s.solicitado_por }}</td>
+                        <td>
+                            <span class="badge 
+                                {% if s.prioridad == 'Alta' %} bg-danger 
+                                {% elif s.prioridad == 'Media' %} bg-warning text-dark 
+                                {% else %} bg-success 
+                                {% endif %}">{{ s.prioridad }}</span>
+                        </td>
+                        <td>{{ s.fecha_solicitud.strftime('%Y-%m-%d') }}</td>
+                        <td>{{ s.fecha_entregado.strftime('%Y-%m-%d') if s.fecha_entregado else 'Pendiente' }}</td>
+                        <td>{{ s.encargado or '-' }}</td>
+                        <td>
+                            <div class="btn-group">
+                                <button class="btn btn-sm btn-warning" data-bs-toggle="modal"
+                                    data-bs-target="#editarSolicitudModal"
+                                    data-id="{{ s.id }}"
+                                    data-reporte="{{ s.reporte }}"
+                                    data-area="{{ s.area }}"
+                                    data-fecha_solicitud="{{ s.fecha_solicitud }}"
+                                    data-solicitado_por="{{ s.solicitado_por }}"
+                                    data-prioridad="{{ s.prioridad }}"
+                                    data-fecha_entregado="{{ s.fecha_entregado or '' }}"
+                                    data-encargado="{{ s.encargado or '' }}"
+                                    data-complejidad="{{ s.complejidad }}"
+                                    data-progreso="{{ s.progreso }}"
+                                    data-observaciones="{{ s.observaciones or '' }}">
+                                    <i class="bi bi-pencil-square"></i>
+                                </button>
+                            </div>
+                        </td>
+                    </tr>
+                    {% else %}
+                    <tr>
+                        <td colspan="9" class="text-center text-muted">No hay solicitudes registradas</td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+</div>
+
+<!-- Modal Nueva Solicitud -->
+<div class="modal fade" id="nuevaSolicitudModal" tabindex="-1" aria-labelledby="nuevaSolicitudLabel" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <form method="POST" action="{{ url_for('crear_solicitud_reporte') }}">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="nuevaSolicitudLabel">Nueva Solicitud</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    {% include "_form_solicitud_nueva.html" %}
+                </div>
+                <div class="modal-footer">
+                    <button class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+                    <button class="btn btn-success" type="submit">Guardar</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<!-- Modal Editar Solicitud -->
+<div class="modal fade" id="editarSolicitudModal" tabindex="-1" aria-labelledby="editarSolicitudLabel" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <form method="POST" action="{{ url_for('editar_solicitud_reporte') }}">
+                <input type="hidden" name="id" id="edit_id">
+                <div class="modal-header">
+                    <h5 class="modal-title">Editar Solicitud</h5>
+                    <button class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    {% include "_form_solicitud_editar.html" %}
+                </div>
+                <div class="modal-footer">
+                    <button class="btn btn-secondary" type="button" data-bs-dismiss="modal">Cancelar</button>
+                    <button class="btn btn-primary" type="submit">Guardar Cambios</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+{% endblock %}
+
+{% block scripts %}
+<script>
+    flatpickr(".flatpickr-fecha", {
+        dateFormat: "Y-m-d",
+        locale: "es"
+    });
+
+    // Limpiar el formulario al abrir "Nueva Solicitud"
+    document.getElementById('nuevaSolicitudModal').addEventListener('show.bs.modal', () => {
+        document.getElementById('new_reporte').value = '';
+        document.getElementById('new_area').value = '';
+        document.getElementById('new_fecha_solicitud').value = '';
+        document.getElementById('new_solicitado_por').value = '';
+        document.getElementById('new_prioridad').value = 'Media';
+        document.getElementById('new_fecha_entregado').value = '';
+        document.getElementById('new_encargado').value = '';
+        document.getElementById('new_complejidad').value = 'Media';
+        document.getElementById('new_progreso').value = 0;
+        document.getElementById('new_observaciones').value = '';
+    });
+
+    // Cargar datos al abrir "Editar Solicitud"
+    document.getElementById('editarSolicitudModal').addEventListener('show.bs.modal', function (event) {
+        const button = event.relatedTarget;
+        document.getElementById('edit_id').value = button.getAttribute('data-id');
+        document.getElementById('edit_reporte').value = button.getAttribute('data-reporte');
+        document.getElementById('edit_area').value = button.getAttribute('data-area');
+        document.getElementById('edit_fecha_solicitud').value = button.getAttribute('data-fecha_solicitud');
+        document.getElementById('edit_solicitado_por').value = button.getAttribute('data-solicitado_por');
+        document.getElementById('edit_prioridad').value = button.getAttribute('data-prioridad');
+        document.getElementById('edit_fecha_entregado').value = button.getAttribute('data-fecha_entregado');
+        document.getElementById('edit_encargado').value = button.getAttribute('data-encargado');
+        document.getElementById('edit_complejidad').value = button.getAttribute('data-complejidad');
+        document.getElementById('edit_progreso').value = button.getAttribute('data-progreso') || 0;
+        document.getElementById('edit_observaciones').value = button.getAttribute('data-observaciones') || '';
+    });
+</script>
+{% endblock %}
+

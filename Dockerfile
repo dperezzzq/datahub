@@ -10,4 +10,4 @@ COPY . .
 
 ENV PYTHONUNBUFFERED=1
 
-CMD exec gunicorn --bind :$PORT --workers 2 --threads 4 app:app
+CMD ["sh", "-c", "gunicorn --bind 0.0.0.0:$PORT --workers 2 --threads 4 app:app"]

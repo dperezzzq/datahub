@@ -15,6 +15,7 @@ from zoneinfo import ZoneInfo
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy import func, and_
 from werkzeug.middleware.proxy_fix import ProxyFix
+import urllib.parse
 
 load_dotenv()  # Carga las variables desde el archivo .env
 
@@ -24,6 +25,17 @@ app.config['PREFERRED_URL_SCHEME'] = 'https'
 
 # Configuración de Flask y SQLAlchemy desde variables de entorno
 app.config['SECRET_KEY'] = os.getenv('FLASK_SECRET_KEY')
+
+db_user = os.getenv("DB_USER")
+db_pass = urllib.parse.quote_plus(os.getenv("DB_PASSWORD"))
+db_name = os.getenv("DB_NAME")
+instance = os.getenv("INSTANCE_CONNECTION_NAME")
+
+app.config["SQLALCHEMY_DATABASE_URI"] = (
+    f"mysql+pymysql://{db_user}:{db_pass}@/{db_name}"
+    f"?unix_socket=/cloudsql/{instance}"
+)
+
 app.config['SQLALCHEMY_DATABASE_URI'] = os.getenv('DATABASE_URL')
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 

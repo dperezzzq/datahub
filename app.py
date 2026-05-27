@@ -57,29 +57,35 @@ areas = {
 }
 
 # Crear el usuario admin solo si no existe
-with app.app_context():
-    # Crear el usuario admin solo si no existe
-    admin_user = os.getenv('USER_ADMIN', 'admin')
-    admin_password = os.getenv('USER_ADMIN_PASSWORD', 'admin')
+def inicializar_admin():
+    with app.app_context():
 
-    db.create_all()  # Asegúrate de que las tablas estén creadas
-        
-    if not Usuario.query.filter_by(user=admin_user).first():
-        contrasena_hash = generate_password_hash(admin_password)
-        usuario_admin = Usuario(
-            nombre="Admin",
-            apellido=" ",
-            user=admin_user,
-            contrasena_hash=contrasena_hash,
-            es_admin=True,
-            ver_metricas=True,
-            ver_solicitudes_reportes=True
-        )
-        db.session.add(usuario_admin)
-        db.session.commit()
-        print(f"✅ Usuario administrador '{admin_user}' creado correctamente.")
-    else:
-        print(f"ℹ️ Usuario administrador '{admin_user}' ya existe.")
+        admin_user = os.getenv('USER_ADMIN', 'admin')
+        admin_password = os.getenv('USER_ADMIN_PASSWORD', 'admin')
+
+        db.create_all()
+
+        if not Usuario.query.filter_by(user=admin_user).first():
+
+            contrasena_hash = generate_password_hash(admin_password)
+
+            usuario_admin = Usuario(
+                nombre="Admin",
+                apellido=" ",
+                user=admin_user,
+                contrasena_hash=contrasena_hash,
+                es_admin=True,
+                ver_metricas=True,
+                ver_solicitudes_reportes=True
+            )
+
+            db.session.add(usuario_admin)
+            db.session.commit()
+
+            print(f"✅ Usuario administrador '{admin_user}' creado correctamente.")
+
+        else:
+            print(f"ℹ️ Usuario administrador '{admin_user}' ya existe.")
 
 
 
@@ -1122,6 +1128,7 @@ def obtener_areas_usuario(usuario_id):
     return areas_data
 
 if __name__ == '__main__':
+    inicializar_admin()
     # Registrar la función para que esté disponible en las plantillas Jinja
     app.jinja_env.globals.update(generar_slug_desde_nombre=generar_slug_desde_nombre)
 

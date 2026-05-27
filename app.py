@@ -31,7 +31,7 @@ db_pass = urllib.parse.quote_plus(os.getenv("DB_PASSWORD"))
 db_name = os.getenv("DB_NAME")
 instance = os.getenv("INSTANCE_CONNECTION_NAME")
 
-app.config["SQLALCHEMY_DATABASE_URI"] = (
+DATABASE_URI = (
     f"mysql+pymysql://{db_user}:{db_pass}@/{db_name}"
     f"?unix_socket=/cloudsql/{instance}"
 )
